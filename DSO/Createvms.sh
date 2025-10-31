@@ -15,6 +15,7 @@ BRIDGE="vmbr0"
 DISK_STORAGE="ceph-storage"
 DISK_SIZE=50
 SSH_KEY_PATH="$HOME/.ssh/id_rsa.pub"
+SSH_KEY_PATH_PRIVATE="$HOME/.ssh/id_rsa"
 USER="ubuntu"
 GATEWAY="10.24.20.1"
 CLOUDIMG_URL="https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
@@ -169,48 +170,39 @@ install_docker() {
     log_info "Docker-installatie starten op $host_ip..."
     ssh-keygen -R "$host_ip" &>/dev/null || true
 
-    ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no "$USER@$host_ip" <<'EOF'
-set -euo pipefail
+    ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${USER}@${host_ip} <<'EOF'
+set -euxo pipefail
 
-echo "[INFO] Controleren op APT locks..."
-# Wacht tot APT-locks vrij zijn
+# Wacht tot apt locks vrij zijn
 while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1 \
    || sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
    || sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
-    echo "[INFO] Wachten op apt lock..."
+    echo "Wachten op apt lock..."
     sleep 2
 done
 
-echo "[INFO] Systeem bijwerken..."
+# Systeem updaten en vereisten installeren
 sudo DEBIAN_FRONTEND=noninteractive apt update -y
 sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
-
-echo "[INFO] Basisvereisten installeren..."
 sudo DEBIAN_FRONTEND=noninteractive apt install -y \
-    apt-transport-https ca-certificates curl \
-    software-properties-common gnupg lsb-release \
-    net-tools vim git
+    net-tools apt-transport-https ca-certificates curl \
+    software-properties-common gnupg lsb-release vim git
 
-echo "[INFO] Docker repository toevoegen..."
+# Docker repository toevoegen
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" \
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
     | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-echo "[INFO] Docker installeren..."
 sudo DEBIAN_FRONTEND=noninteractive apt update -y
 sudo DEBIAN_FRONTEND=noninteractive apt install -y \
-    docker-ce docker-ce-cli containerd.io \
-    docker-buildx-plugin docker-compose-plugin
+    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-echo "[INFO] Docker configureren..."
-sudo usermod -aG docker \$USER
+sudo usermod -aG docker $USER
 sudo systemctl enable docker
 sudo systemctl start docker
-
-echo "[INFO] Docker-installatie voltooid. Versie:"
 sudo docker --version
 EOF
 }
