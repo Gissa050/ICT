@@ -37,11 +37,11 @@ TEMPLATE_FILE = os.path.join(BASE_DIR, "email_template.html")
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "${SMTP_USER}"
-SMTP_PASS = "${SMTP_PASS}"   # app password
+SMTP_PASS = os.environ.get("SMTP_PASS")
 MAIL_TO   = "${MAIL_TO}"
 
 # ---- Telegram ----
-TELEGRAM_BOT_TOKEN = "${TELEGRAM_BOT_TOKEN}"
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = "${TELEGRAM_CHAT_ID}"  # mag string of int
 TELEGRAM_PARSE_MODE = "HTML"  # we gebruiken HTML formatting
 
