@@ -1,0 +1,18 @@
+{
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Registry Reachability",
+      "targets": [{ "expr": "docker_registry_up" }],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "type": "stat",
+      "title": "Repositories in Registry",
+      "targets": [{ "expr": "docker_registry_repositories_total" }],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    }
+  ],
+  "title": "Docker Registry Overview",
+  "uid": "docker-registry-basic"
+}

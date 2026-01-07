@@ -1,0 +1,61 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Builds",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [{ "expr": "sum(drone_builds_total)", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "orientation": "horizontal" }
+    },
+    {
+      "type": "stat",
+      "title": "Active Runners",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [{ "expr": "drone_runners_total", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "stat",
+      "title": "Total Repositories",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [{ "expr": "drone_repos_total", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "gauge",
+      "title": "Average Build Duration (seconds)",
+      "gridPos": { "x": 0, "y": 4, "w": 6, "h": 4 },
+      "targets": [{ "expr": "avg(drone_build_duration_seconds)", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Builds per Repository (last hour)",
+      "gridPos": { "x": 6, "y": 4, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum by (repo) (increase(drone_builds_total[1h]))", "refId": "A" }],
+      "options": { "legend": { "showLegend": true, "displayMode": "table" } }
+    },
+    {
+      "type": "bargauge",
+      "title": "Build Success vs Failures",
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 8 },
+      "targets": [{ "expr": "sum by (status) (drone_builds_total)", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["drone", "ci", "prometheus"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "",
+  "title": "Drone CI Metrics",
+  "uid": "drone-ci-metrics",
+  "version": 1
+}

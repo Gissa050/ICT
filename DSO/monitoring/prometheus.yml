@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # ---- Prometheus zelf ----
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ---- Drone CI Server ----
+  - job_name: "drone-server"
+    static_configs:
+      - targets: ["10.24.20.62:80"]
+    metrics_path: /metrics
+
+  # ---- Docker Daemon ----
+  - job_name: "docker-daemon"
+    static_configs:
+      - targets: ["10.24.20.62:9323"]
+
+  # ---- Node Exporters ----
+  - job_name: "node-exporter"
+    static_configs:
+      - targets:
+          - "10.24.20.62:9100"
+          - "10.24.20.61:9100"
+          - "10.24.20.63:9100"
+
+  # ---- Docker Registry ----
+  - job_name: "docker-registry"
+    static_configs:
+      - targets: ["10.24.20.62:9101"]
+    metrics_path: /metrics
+
+  # ---- Gitea ----
+  - job_name: "gitea"
+    static_configs:
+      - targets: ["10.24.20.61:3000"]
+    metrics_path: /metrics

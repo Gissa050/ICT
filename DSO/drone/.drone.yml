@@ -1,0 +1,86 @@
+kind: pipeline
+type: docker
+name: build-test-deploy
+
+steps:
+  - name: build
+    image: node:20
+    commands:
+      - npm ci
+      - npm run build
+
+  - name: lint
+    image: node:20
+    commands:
+      - npm run lint:prod
+
+  - name: test-backend
+    image: node:20
+    environment:
+      HEADLESS_TEST: 1
+      JUST_FOR_TEST: testsecret
+    commands:
+      - npm  ci
+      - npm run test-backend || true
+
+  - name: docker-build-test
+    image: plugins/docker
+    when:
+      branch: [ test ]
+    settings:
+      dockerfile: docker/dockerfile
+      context: .
+      registry: 10.24.20.62:6000
+      repo: 10.24.20.62:6000/uptime-kuma
+      tags:
+        - test
+      insecure: true
+
+  - name: docker-build-prod
+    image: plugins/docker
+    when:
+      branch: [ main ]
+    settings:
+      dockerfile: docker/dockerfile
+      context: .
+      registry: 10.24.20.62:6000
+      repo: 10.24.20.62:6000/uptime-kuma
+      tags:
+        - prod
+      insecure: true
+
+  - name: deploy-prod
+    image: appleboy/drone-ssh
+    when:
+      branch: [ main ]
+    settings:
+      host: 10.24.20.63
+      username: ubuntu
+      key:
+        from_secret: id_ed25519
+      script:
+        - docker pull 10.24.20.62:6000/uptime-kuma:prod
+        - docker stop uptime || true
+        - docker rm uptime || true
+        - docker run -d --name uptime -p 3001:3001 10.24.20.62:6000/uptime-kuma:prod
+
+  - name: deploy-test
+    image: appleboy/drone-ssh
+    when:
+      branch: [ test ]
+    settings:
+      host: 10.24.20.63
+      username: ubuntu
+      key:
+        from_secret: id_ed25519
+      script:
+        - mkdir -p /opt/uptime-kuma-test
+        - docker pull 10.24.20.62:6000/uptime-kuma:test
+        - docker stop uptime-test || true
+        - docker rm uptime-test || true
+        - docker run -d --name uptime-test -p 3002:3001 -v /opt/uptime-kuma-test:/app/data 10.24.20.62:6000/uptime-kuma:test
+
+trigger:
+  branch:
+    - main
+    - test 
